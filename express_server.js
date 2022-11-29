@@ -1,14 +1,31 @@
+//Express
+const { response } = require("express");
 const express = require("express");
 const app = express();
-const PORT = 8080; // default port 8080
 
+// default port 8080
+const PORT = 8080;
+
+//Body Parser
 app.use(express.urlencoded({ extended: true }));
 
+//EJS
 app.set("view engine", "ejs");
+
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  "9sm5xK": "http://www.google.com",
+};
+
+//Generates a string of 6 random alphanumeric characters
+const generateRandomString = () => {
+  const alphaNumerical = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  let result = '';
+  for (let i = 0; i < 6; i++) {
+    result += alphaNumerical.charAt(Math.floor(Math.random() * alphaNumerical.length));
+  }
+  return result;
 };
 
 app.get("/", (req, res) => {
@@ -43,6 +60,8 @@ app.get("/hello", (req, res) => {
 });
 
 app.post("/urls", (req, res) => {
-  console.log(req.body); // Log the POST request body to the console
-  res.send("Ok"); // Respond with 'Ok' (we will replace this)
+  let id = generateRandomString()
+  urlDatabase[id] = request.body.longURL;
+  response.redirect(`/urls/${id}`);
 });
+
