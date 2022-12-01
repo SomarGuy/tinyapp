@@ -65,5 +65,9 @@ app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 
-
+app.post("/urls", (req, res) => {
+  let id = generateRandomString()
+  urlDatabase[id] = request.body.longURL;
+  response.redirect(`/urls/${id}`);
+});
 
