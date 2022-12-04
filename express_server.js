@@ -10,7 +10,7 @@ const users = {
   userRandomID: {
     id: "userRandomID",
     email: "user@example.com",
-    password: "purple-monkey-dinosaur",
+    password: "purdinosaurple-monkey-",
   },
   user2RandomID: {
     id: "user2RandomID",
@@ -74,6 +74,7 @@ app.get("/u/:id", (req, res) => {
   res.redirect(longURL);
 });
 
+//login form
 app.get("/login", (req, res) => {
   const templateVars = {
     user: users[req.cookies["user_id"]]
@@ -81,6 +82,7 @@ app.get("/login", (req, res) => {
   res.render("urls_login", templateVars);
 });
 
+//register form
 app.get("/register", (req, res) => {
   const templateVars = {
     user: users[req.cookies["user_id"]]
@@ -123,6 +125,15 @@ const userIdFromEmail = function(email, userDatabase) {
   }
 };
 
+const emailHasUser = function(email, userDatabase) {
+  for (let key in userDatabase) {
+    if (email === userDatabase[key].email) {
+      return email;
+    }
+  }
+  return undefined;
+};
+
 app.post("/login", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
@@ -131,11 +142,11 @@ app.post("/login", (req, res) => {
     res.status(403).send("There is no account associated with this email address");
   } else {
     const userID = userIdFromEmail(email, users);
-    if (user && password !== user.password) {
+    if (password !== users[userID].password) {
       res.status(403).send("The password you entered does not match the one associated with the provided email address");
     } else {
-      req.cookies["user_id"];
-      res.redirect("/login");
+      res.cookie('user_id', userID);      
+      res.redirect("/urls");
     }
   }
 });
@@ -145,15 +156,6 @@ app.post("/logout", (req, res) => {
   res.clearCookie("user_id");
   res.redirect("/login");
 });
-
-const emailHasUser = function(email, userDatabase) {
-  for (let key in userDatabase) {
-    if (email === userDatabase[key].email) {
-      return email;
-    }
-  }
-  return undefined;
-};
 
 app.post("/register", (req, res) => {
   const email = req.body.email;
