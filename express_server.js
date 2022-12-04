@@ -82,13 +82,11 @@ app.get("/login", (req, res) => {
 });
 
 app.get("/register", (req, res) => {
-    const currentUser = users[req.cookies.username];
-  const templateVars = { email: "email", password: "password", user: users[req.cookies["user_id"]]
-};
-  if (currentUser) {
-    return res.redirect("/urls");
-  }
+  const templateVars = {
+    user: users[req.cookies["user_id"]]
+  };
   res.render("urls_register", templateVars);
+  res.redirect("/urls");
 });
 
 app.get("/urls.json", (req, res) => {
@@ -117,16 +115,35 @@ app.post("/urls/:shortURL", (req, res) => {
   res.redirect("/urls");
 });
 
+const userIdFromEmail = function(email, userDatabase) {
+  for (const user in userDatabase) {
+    if (userDatabase[user].email === email) {
+      return userDatabase[user].id;
+    }
+  }
+};
+
 app.post("/login", (req, res) => {
-  const username = req.body.username;
-  res.cookie("username", username);
-  res.redirect("/urls");
+  const email = req.body.email;
+  const password = req.body.password;
+
+  if (!emailHasUser(email, users)) {
+    res.status(403).send("There is no account associated with this email address");
+  } else {
+    const userID = userIdFromEmail(email, users);
+    if (user && password !== user.password) {
+      res.status(403).send("The password you entered does not match the one associated with the provided email address");
+    } else {
+      req.cookies["user_id"];
+      res.redirect("/login");
+    }
+  }
 });
 
 
 app.post("/logout", (req, res) => {
   res.clearCookie("user_id");
-  res.redirect("/urls");
+  res.redirect("/login");
 });
 
 const emailHasUser = function(email, userDatabase) {
