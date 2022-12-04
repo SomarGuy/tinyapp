@@ -51,13 +51,13 @@ app.listen(PORT, () => {
 });
 
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase, username: req.cookies["username"],
+  const templateVars = { urls: urlDatabase, user: users[req.cookies["user_id"]]
 };
   res.render("urls_index", templateVars);
 });
 
 app.get("/urls/new", (req, res) => {
-  const templateVars = { urls: urlDatabase, username: req.cookies["username"],
+  const templateVars = { urls: urlDatabase, user: users[req.cookies["user_id"]]
 };
   res.render("urls_new", templateVars);
 });
@@ -83,6 +83,23 @@ app.get("/register", (req, res) => {
     res.redirect("/urls");
   }
   res.render("register", templateVars);
+});
+
+//login form
+app.get("/login", (req, res) => {
+  const templateVars = {
+    user: users[req.cookies["user_id"]]
+  };
+  res.render("urls_login", templateVars);
+});
+
+//register form
+app.get("/register", (req, res) => {
+  const templateVars = {
+    user: users[req.cookies["user_id"]]
+  };
+  res.render("urls_register", templateVars);
+  res.redirect("/urls");
 });
 
 app.get("/urls.json", (req, res) => {
@@ -111,17 +128,63 @@ app.post("/urls/:shortURL", (req, res) => {
   res.redirect("/urls");
 });
 
+const userIdFromEmail = function(email, userDatabase) {
+  for (const user in userDatabase) {
+    if (userDatabase[user].email === email) {
+      return userDatabase[user].id;
+    }
+  }
+};
+
+const emailHasUser = function(email, userDatabase) {
+  for (let key in userDatabase) {
+    if (email === userDatabase[key].email) {
+      return email;
+    }
+  }
+  return undefined;
+};
+
 app.post("/login", (req, res) => {
-  const username = req.body.username;
-  res.cookie("username", username);
-  res.redirect("/urls");
+  const email = req.body.email;
+  const password = req.body.password;
+
+  if (!emailHasUser(email, users)) {
+    res.status(403).send("There is no account associated with this email address");
+  } else {
+    const userID = userIdFromEmail(email, users);
+    if (password !== users[userID].password) {
+      res.status(403).send("The password you entered does not match the one associated with the provided email address");
+    } else {
+      res.cookie('user_id', userID);      
+      res.redirect("/urls");
+    }
+  }
 });
 
 
 app.post("/logout", (req, res) => {
-  res.clearCookie("username");
-  res.redirect("/urls");
+  res.clearCookie("user_id");
+  res.redirect("/login");
 });
 
+app.post("/register", (req, res) => {
+  const email = req.body.email;
+  const password = req.body.password;
+  if (!email || !password) {
+    res.status(400).send("Please include both a valid email and password");
+  } else if (emailHasUser(email, users)) {    res.status(400).send("An account already exists with this email address");
+  } else {
+    const newUserID = generateRandomString();
+    const userObj = {
+      id: newUserID,
+      email: email,
+      password: password
+    };
+    users[newUserID] = userObj;
+    res.cookie("user_id", newUserID);
+    res.redirect("/urls");
+  }
+});
 
 
