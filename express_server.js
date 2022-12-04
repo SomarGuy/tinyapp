@@ -74,9 +74,15 @@ app.get("/u/:id", (req, res) => {
   res.redirect(longURL);
 });
 
+app.get("/login", (req, res) => {
+  const templateVars = {
+    user: users[req.cookies["user_id"]]
+  };
+  res.render("urls_login", templateVars);
+});
+
 app.get("/register", (req, res) => {
-  console.log(req.session)
-  const currentUser = users[req.cookies.username];
+    const currentUser = users[req.cookies.username];
   const templateVars = { email: "email", password: "password", user: users[req.cookies["user_id"]]
 };
   if (currentUser) {
@@ -119,23 +125,36 @@ app.post("/login", (req, res) => {
 
 
 app.post("/logout", (req, res) => {
-  res.clearCookie("username");
+  res.clearCookie("user_id");
   res.redirect("/urls");
 });
 
+const emailHasUser = function(email, userDatabase) {
+  for (let key in userDatabase) {
+    if (email === userDatabase[key].email) {
+      return email;
+    }
+  }
+  return undefined;
+};
+
 app.post("/register", (req, res) => {
-  console.log("req.body", req.body);
-  const newUserID = generateRandomString();
   const email = req.body.email;
   const password = req.body.password;
-  const userObj = {
-    id: newUserID,
-    email: email,
-    password: password
+  if (!email || !password) {
+    res.status(400).send("Please include both a valid email and password");
+  } else if (emailHasUser(email, users)) {    res.status(400).send("An account already exists with this email address");
+  } else {
+    const newUserID = generateRandomString();
+    const userObj = {
+      id: newUserID,
+      email: email,
+      password: password
+    };
+    users[newUserID] = userObj;
+    res.cookie("user_id", newUserID);
+    res.redirect("/urls");
   }
-  users[newUserID] = userObj;
-  res.cookie("user_id", newUserID);
-  res.redirect("/urls");
 });
 
 
