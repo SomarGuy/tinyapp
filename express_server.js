@@ -6,12 +6,11 @@ const cookieParser = require('cookie-parser')
 app.use(cookieParser())
 // default port 8080
 const PORT = 8080;
-
 const users = {
   userRandomID: {
     id: "userRandomID",
     email: "user@example.com",
-    password: "purple-monkey-dinosaur",
+    password: "purdinosaurple-monkey-",
   },
   user2RandomID: {
     id: "user2RandomID",
@@ -64,7 +63,7 @@ app.get("/urls/new", (req, res) => {
 
 app.get("/urls/:id", (req, res) => {
   const userInput = req.params.id
-  const templateVars = { id: userInput, longURL: urlDatabase[userInput], username: req.cookies["username"],
+  const templateVars = { id: userInput, longURL: urlDatabase[userInput], user: users[req.cookies["user_id"]]
 };
   res.render("urls_show", templateVars);
 });
@@ -73,14 +72,6 @@ app.get("/u/:id", (req, res) => {
   const id = req.params.id;
   const longURL = urlDatabase[id];
   res.redirect(longURL);
-});
-
-app.get("/register", (req, res) => {
-  const templateVars = {
-    user: users[req.cookies["user_id"]]
-  };
-  res.render("urls_register", templateVars);
-  res.redirect("/urls");
 });
 
 //login form
@@ -184,5 +175,3 @@ app.post("/register", (req, res) => {
     res.redirect("/urls");
   }
 });
-
-
