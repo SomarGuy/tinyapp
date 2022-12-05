@@ -76,13 +76,11 @@ app.get("/u/:id", (req, res) => {
 });
 
 app.get("/register", (req, res) => {
-  const currentUser = users[req.session.user_id]
-  const templateVars = { email: "email", password: "password", user: currentUser, username: req.cookies["username"],
-};
-  if (currentUser) {
-    res.redirect("/urls");
-  }
-  res.render("register", templateVars);
+  const templateVars = {
+    user: users[req.cookies["user_id"]]
+  };
+  res.render("urls_register", templateVars);
+  res.redirect("/urls");
 });
 
 //login form
