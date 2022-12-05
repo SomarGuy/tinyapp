@@ -56,9 +56,13 @@ app.get("/urls", (req, res) => {
 });
 
 app.get("/urls/new", (req, res) => {
-  const templateVars = { urls: urlDatabase, user: users[req.cookies["user_id"]]
+  if (!cookieHasUser(req.cookies["user_id"], users)) {
+    res.redirect("/login");
+  } else {
+    const templateVars = { urls: urlDatabase, user: users[req.cookies["user_id"]]
 };
   res.render("urls_new", templateVars);
+  }
 });
 
 app.get("/urls/:id", (req, res) => {
@@ -106,6 +110,8 @@ app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 
+//POST
+
 app.post("/urls/:id/delete", (req, res) => {
   const userInput = req.params.id;
     delete urlDatabase[userInput];
@@ -113,9 +119,16 @@ app.post("/urls/:id/delete", (req, res) => {
 });
 
 app.post("/urls", (req, res) => {
-  let id = generateRandomString()
-  urlDatabase[id] = req.body.longURL;
-  response.redirect(`/urls/${id}`);
+  if (req.cookies["user_id"]) {
+    const shortURL = generateRandomString();
+    urlDatabase[shortURL] = {
+      longURL: req.body.longURL,
+      userID: req.cookies["user_id"],
+    };
+    res.redirect(`/urls/${shortURL}`);
+  } else {
+    res.status(401).send("You must be logged in to a valid account to create short URLS")
+  }
 });
 
 app.post("/urls/:shortURL", (req, res) => {
