@@ -76,19 +76,26 @@ app.get("/u/:id", (req, res) => {
 
 //login form
 app.get("/login", (req, res) => {
-  const templateVars = {
-    user: users[req.cookies["user_id"]]
-  };
-  res.render("urls_login", templateVars);
+  if (cookieHasUser(req.cookies["user_id"], users)) {
+    res.redirect("/urls");
+  } else {
+    const templateVars = {
+      user: users[req.cookies["user_id"]]
+    };
+    res.render("urls_login", templateVars);
+  }
 });
 
 //register form
 app.get("/register", (req, res) => {
-  const templateVars = {
-    user: users[req.cookies["user_id"]]
-  };
-  res.render("urls_register", templateVars);
-  res.redirect("/urls");
+  if (cookieHasUser(req.cookies["user_id"], users)) {
+    res.redirect("/urls");
+  } else {
+    let templateVars = {
+      user: users[req.cookies["user_id"]]
+    };
+    res.render("urls_register", templateVars);
+  }
 });
 
 app.get("/urls.json", (req, res) => {
@@ -116,6 +123,15 @@ app.post("/urls/:shortURL", (req, res) => {
   urlDatabase[shortURL] = req.body.editedLongURL;
   res.redirect("/urls");
 });
+
+//Helper
+const cookieHasUser = function(cookie, userDatabase) {
+  for (const user in userDatabase) {
+    if (cookie === user) {
+      return true;
+    }
+  } return false;
+};
 
 const userIdFromEmail = function(email, userDatabase) {
   for (const user in userDatabase) {
