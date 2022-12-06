@@ -6,7 +6,7 @@ const app = express();
 const PORT = 8080;
 
 //Helper
-const { emailHasUser, getUserByEmail } = require("./helpers");
+const { emailHasUser, getUserByEmail, cookieHasUser, urlsForUser } = require("./helpers");
 
 //Body Parser
 app.use(express.urlencoded({ extended: true }));
@@ -205,25 +205,6 @@ app.post("/urls/:shortURL", (req, res) => {
   urlDatabase[shortURL] = req.body.editedLongURL;
   res.redirect("/urls");
 });
-
-//Helper
-const cookieHasUser = function(cookie, userDatabase) {
-  for (const user in userDatabase) {
-    if (cookie === user) {
-      return true;
-    }
-  } return false;
-};
-
-const urlsForUser = function(id, urlDatabase) {
-  const userUrls = {};
-  for (const shortURL in urlDatabase) {
-    if (urlDatabase[shortURL].userID === id) {
-      userUrls[shortURL] = urlDatabase[shortURL];
-    }
-  }
-  return userUrls;
-};
 
 app.post("/login", (req, res) => {
   const email = req.body.email;
