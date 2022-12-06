@@ -55,8 +55,8 @@ app.get("/urls/new", (req, res) => {
     res.redirect("/login");
   } else {
     const templateVars = { urls: urlDatabase, user: users[req.session.user_id],
-};
-  res.render("urls_new", templateVars);
+    };
+    res.render("urls_new", templateVars);
   }
 });
 
@@ -89,10 +89,10 @@ app.get('/urls/:id', (req, res) => {
 
   const user_id = req.session.user_id;
 
-    // non user tries to access short URL
-    if (!user_id) {
-      return res.status(403).send('Please login');
-    }
+  // non user tries to access short URL
+  if (!user_id) {
+    return res.status(403).send('Please login');
+  }
 
   // if url doesn't exist
   if (!urlDatabase[urlID]) {
@@ -106,7 +106,7 @@ app.get('/urls/:id', (req, res) => {
 
   const longURL = urlDatabase[urlID].longURL;
 
-  const user = users[user_id]
+  const user = users[user_id];
 
   const templateVars = {
     user,
@@ -135,7 +135,8 @@ app.post("/register", (req, res) => {
   const password = req.body.password;
   if (!email || !password) {
     res.status(400).send("Please include both a valid email and password");
-  } else if (emailHasUser(email, users)) {    res.status(400).send("An account already exists with this email address");
+  } else if (emailHasUser(email, users)) {    
+    res.status(400).send("An account already exists with this email address");
   } else {
     const newUserID = generateRandomString();
     const userObj = {
@@ -182,8 +183,8 @@ app.post("/urls/:id/delete", (req, res) => {
   if (urlDatabase[userInput].userID !== req.session.user_id) {
     return res.status(403).send("User does not own URL");
   }
-    delete urlDatabase[userInput];
-    res.redirect("/urls");
+  delete urlDatabase[userInput];
+  res.redirect("/urls");
 });
 
 app.post("/urls", (req, res) => {
@@ -195,7 +196,7 @@ app.post("/urls", (req, res) => {
     };
     res.redirect(`/urls/${shortURL}`);
   } else {
-    res.status(401).send("You must be logged in to a valid account to create short URLS")
+    res.status(401).send("You must be logged in to a valid account to create short URLS");
   }
 });
 
