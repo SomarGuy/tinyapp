@@ -6,34 +6,18 @@ const app = express();
 const PORT = 8080;
 
 //Helper
-const { emailHasUser, getUserByEmail, cookieHasUser, urlsForUser } = require("./helpers");
+const { emailHasUser, getUserByEmail, cookieHasUser, urlsForUser, generateRandomString } = require("./helpers");
 
 //Body Parser
 app.use(express.urlencoded({ extended: true }));
 
 //Databases
 const urlDatabase = {
-  b6UTxQ: {
-    longURL: "https://www.tsn.ca",
-    userID: "aJ48lW",
-  },
-  i3BoGr: {
-    longURL: "https://www.google.ca",
-    userID: "aJ48lW",
-  },
+
 };
 
 const users = {
-  userRandomID: {
-    id: "userRandomID",
-    email: "user@example.com",
-    password: "purdinosaurple-monkey-",
-  },
-  user2RandomID: {
-    id: "user2RandomID",
-    email: "user2@example.com",
-    password: "dishwasher-funk",
-  },
+
 };
 
 //EJS
@@ -45,15 +29,7 @@ app.use(cookieSession({
   maxAge: 24 * 60 * 60 * 1000,
 }));
 
-//Generates a string of 6 random alphanumeric characters
-const generateRandomString = () => {
-  const alphaNumerical = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-  let result = '';
-  for (let i = 0; i < 6; i++) {
-    result += alphaNumerical.charAt(Math.floor(Math.random() * alphaNumerical.length));
-  }
-  return result;
-};
+//Routes
 
 app.get("/", (req, res) => {
   if (cookieHasUser(req.session.user_id, users)) {
@@ -81,6 +57,30 @@ app.get("/urls/new", (req, res) => {
     const templateVars = { urls: urlDatabase, user: users[req.session.user_id],
 };
   res.render("urls_new", templateVars);
+  }
+});
+
+//register form
+app.get("/register", (req, res) => {
+  if (cookieHasUser(req.session.user_id, users)) {
+    res.redirect("/urls");
+  } else {
+    const templateVars = {
+      user: users[req.session.user_id]
+    };
+    res.render("urls_register", templateVars);
+  }
+});
+
+//login form
+app.get("/login", (req, res) => {
+  if (cookieHasUser(req.session.user_id, users)) {
+    res.redirect("/urls");
+  } else {
+    const templateVars = {
+      user: users[req.session.user_id]
+    };
+    res.render("urls_login", templateVars);
   }
 });
 
@@ -129,39 +129,47 @@ app.get("/u/:id", (req, res) => {
   }
 });
 
-//login form
-app.get("/login", (req, res) => {
-  if (cookieHasUser(req.session.user_id, users)) {
-    res.redirect("/urls");
-  } else {
-    const templateVars = {
-      user: users[req.session.user_id]
-    };
-    res.render("urls_login", templateVars);
-  }
-});
-
-//register form
-app.get("/register", (req, res) => {
-  if (cookieHasUser(req.session.user_id, users)) {
-    res.redirect("/urls");
-  } else {
-    const templateVars = {
-      user: users[req.session.user_id]
-    };
-    res.render("urls_register", templateVars);
-  }
-});
-
-app.get("/urls.json", (req, res) => {
-  res.json(urlDatabase);
-});
-
-app.get("/hello", (req, res) => {
-  res.send("<html><body>Hello <b>World</b></body></html>\n");
-});
-
 //POST
+app.post("/register", (req, res) => {
+  const email = req.body.email;
+  const password = req.body.password;
+  if (!email || !password) {
+    res.status(400).send("Please include both a valid email and password");
+  } else if (emailHasUser(email, users)) {    res.status(400).send("An account already exists with this email address");
+  } else {
+    const newUserID = generateRandomString();
+    const userObj = {
+      id: newUserID,
+      email: email,
+      password: bcrypt.hashSync(password, 10),
+    };
+    users[newUserID] = userObj;
+    req.session.user_id = newUserID;
+    res.redirect("/urls");
+  }
+});
+
+app.post("/login", (req, res) => {
+  const email = req.body.email;
+  const password = req.body.password;
+
+  if (!emailHasUser(email, users)) {
+    res.status(403).send("There is no account associated with this email address");
+  } else {
+    const userID = getUserByEmail(email, users);
+    if (!bcrypt.compareSync(password, users[userID].password)) {
+      res.status(403).send("The password you entered does not match the one associated with the provided email address");
+    } else {
+      req.session.user_id = userID;      
+      res.redirect("/urls");
+    }
+  }
+});
+
+app.post("/logout", (req, res) => {
+  req.session = null;
+  res.redirect("/login");
+});
 
 app.post("/urls/:id/delete", (req, res) => {
   const userInput = req.params.id;
@@ -204,48 +212,6 @@ app.post("/urls/:shortURL", (req, res) => {
   }
   urlDatabase[shortURL] = req.body.editedLongURL;
   res.redirect("/urls");
-});
-
-app.post("/login", (req, res) => {
-  const email = req.body.email;
-  const password = req.body.password;
-
-  if (!emailHasUser(email, users)) {
-    res.status(403).send("There is no account associated with this email address");
-  } else {
-    const userID = getUserByEmail(email, users);
-    if (!bcrypt.compareSync(password, users[userID].password)) {
-      res.status(403).send("The password you entered does not match the one associated with the provided email address");
-    } else {
-      req.session.user_id = userID;      
-      res.redirect("/urls");
-    }
-  }
-});
-
-
-app.post("/logout", (req, res) => {
-  req.session = null;
-  res.redirect("/login");
-});
-
-app.post("/register", (req, res) => {
-  const email = req.body.email;
-  const password = req.body.password;
-  if (!email || !password) {
-    res.status(400).send("Please include both a valid email and password");
-  } else if (emailHasUser(email, users)) {    res.status(400).send("An account already exists with this email address");
-  } else {
-    const newUserID = generateRandomString();
-    const userObj = {
-      id: newUserID,
-      email: email,
-      password: bcrypt.hashSync(password, 10),
-    };
-    users[newUserID] = userObj;
-    req.session.user_id = newUserID;
-    res.redirect("/urls");
-  }
 });
 
 app.listen(PORT, () => {
